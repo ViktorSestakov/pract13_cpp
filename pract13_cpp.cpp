@@ -47,12 +47,12 @@ void GamePlay(GamePlayPlayer gpl)
 	while (!gameOver)
 	{
 		WaitForSingleObject(pEvent, INFINITE);
-
 		WaitForSingleObject(hMutex, INFINITE);
 
 		if (boss.health <= 0 || gpl.pl->health <= 0)
 		{
 			ReleaseMutex(hMutex);
+			gameOver == true;
 			break;
 		}
 
@@ -60,7 +60,7 @@ void GamePlay(GamePlayPlayer gpl)
 		boss.health -= attackPlayer;
 		gpl.pl->totalDamage += attackPlayer;
 
-		cout << gpl.pl->name << " ударил босса на " << attackPlayer << " | HP босса: " << boss.health << endl;
+		cout << gpl.pl->name << " ударил босса на " << attackPlayer << " - HP босса: " << boss.health << endl;
 
 		ReleaseMutex(hMutex);
 		Sleep(gpl.pl->attckCooldown * 1000);
@@ -71,8 +71,6 @@ void GamePlay(GamePlayPlayer gpl)
 
 void BossPlay(int colvo)
 {
-	int alive = 0;
-
 	while (!gameOver)
 	{
 		Sleep(boss.attackCooldown * 1000);
@@ -90,10 +88,15 @@ void BossPlay(int colvo)
 
 		if (players[index].health > 0)
 		{
-			int attackBoss = boss.damage * (100 - players[index].defense) / 100;
-			players[index].health -= attackBoss;
+			if (rand() % 100 < players[index].dodgeChance) {
+				cout << players[index].name << " уклонился от атаки" << endl;
+			}
+			else {
+				int attackBoss = boss.damage * (100 - players[index].defense) / 100;
+				players[index].health -= attackBoss;
 
-			cout << "БОСС ударил " << players[index].name << " на " << attackBoss << " | HP игрока: " << players[index].health << endl;
+				cout << "БОСС ударил " << players[index].name << " на " << attackBoss << " - HP игрока: " << players[index].health << endl;
+			}
 		}
 
 		ReleaseMutex(hMutex);
@@ -120,18 +123,11 @@ void BossPlay(int colvo)
 			else
 				damage = boss.specialDamage;
 
-			if (players[i].health >= damage) {
+			if (players[i].health > 0) {
 				players[i].health -= damage;
 
-				cout << players[i].name << " получил " << damage << " | HP: " << players[i].health << endl;
+				cout << players[i].name << " получил " << damage << " - HP: " << players[i].health << endl;
 			}
-			else {
-				alive++;
-			}
-		}
-
-		if (alive == colvo) {
-			gameOver = true;
 		}
 
 		ReleaseMutex(hMutex);
@@ -192,8 +188,20 @@ int main()
 	else
 		cout << "Босс победил!" << endl;
 
-	cout << "Урон игроков:" << endl;
-	for (int i = 0; i < vibor; i++)
+	for (int i = 0; i < vibor - 1; i++) {
+		for (int j = 0; j < vibor - i - 1; j++) {
+			if (players[j].totalDamage < players[j + 1].totalDamage) {
+				Player temp = players[j];
+				players[j] = players[j + 1];
+				players[j + 1] = temp;
+			}
+		}
+	}
+
+	int colvopl = (vibor < 3) ? vibor : 3;
+
+	cout << endl << "топ 3 игрока по урону:" << endl;
+	for (int i = 0; i < colvopl; i++)
 	{
 		cout << players[i].name << " -> " << players[i].totalDamage << endl;
 	}
