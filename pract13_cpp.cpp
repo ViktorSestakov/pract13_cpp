@@ -71,15 +71,13 @@ void GamePlay(GamePlayPlayer* gpl)
 
         Sleep(gpl->pl->attckCooldown * 1000);
 
+        ResetEvent(pEvent);
         SetEvent(pEvent);
     }
 
-    // считаем умерших корректно
     WaitForSingleObject(hMutex, INFINITE);
     if (gpl->pl->health <= 0)
-    {
         notalive++;
-    }
     ReleaseMutex(hMutex);
 }
 
@@ -197,7 +195,7 @@ int main()
     srand(time(0));
 
     hMutex = CreateMutex(NULL, FALSE, NULL);
-    pEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+    pEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
 
     int vibor = 0;
 
@@ -214,7 +212,7 @@ int main()
 
     WaitForMultipleObjects(vibor, pThread, TRUE, INFINITE);
 
-    SetEvent(pEvent); // гарантируем пробуждение
+    SetEvent(pEvent);
 
     WaitForSingleObject(bThread, INFINITE);
 
@@ -227,7 +225,6 @@ int main()
     else
         cout << "Босс победил!" << endl;
 
-    // сортировка по урону
     for (int i = 0; i < vibor - 1; i++)
     {
         for (int j = 0; j < vibor - i - 1; j++)
