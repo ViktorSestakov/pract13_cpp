@@ -41,6 +41,7 @@ Player players[10];
 Bayum boss;
 
 bool gameOver = false;
+int notalive = 0;
 
 void GamePlay(GamePlayPlayer gpl)
 {
@@ -52,7 +53,6 @@ void GamePlay(GamePlayPlayer gpl)
 		if (boss.health <= 0 || gpl.pl->health <= 0)
 		{
 			ReleaseMutex(hMutex);
-			gameOver == true;
 			break;
 		}
 
@@ -67,6 +67,8 @@ void GamePlay(GamePlayPlayer gpl)
 
 		SetEvent(pEvent);
 	}
+
+	notalive++;
 }
 
 void BossPlay(int colvo)
@@ -105,32 +107,38 @@ void BossPlay(int colvo)
 
 		WaitForSingleObject(hMutex, INFINITE);
 
-		if (boss.health <= 0)
-		{
+		if (notalive >= colvo) {
 			gameOver = true;
-			ReleaseMutex(hMutex);
 			break;
 		}
-
-		cout << "БОСС использует специальную атаку!" << endl;
-
-		for (int i = 0; i < colvo; i++)
-		{
-			int damage;
-
-			if (colvo > 1)
-				damage = boss.specialDamage * (1 - 0.05 * (colvo - 1));
-			else
-				damage = boss.specialDamage;
-
-			if (players[i].health > 0) {
-				players[i].health -= damage;
-
-				cout << players[i].name << " получил " << damage << " - HP: " << players[i].health << endl;
+		else {
+			if (boss.health <= 0)
+			{
+				gameOver = true;
+				ReleaseMutex(hMutex);
+				break;
 			}
-		}
 
-		ReleaseMutex(hMutex);
+			cout << "БОСС использует специальную атаку!" << endl;
+
+			for (int i = 0; i < colvo; i++)
+			{
+				int damage;
+
+				if (colvo > 1)
+					damage = boss.specialDamage * (1 - 0.05 * (colvo - 1));
+				else
+					damage = boss.specialDamage;
+
+				if (players[i].health > 0) {
+					players[i].health -= damage;
+
+					cout << players[i].name << " получил " << damage << " - HP: " << players[i].health << endl;
+				}
+			}
+
+			ReleaseMutex(hMutex);
+		}
 	}
 }
 
@@ -204,6 +212,10 @@ int main()
 	for (int i = 0; i < colvopl; i++)
 	{
 		cout << players[i].name << " -> " << players[i].totalDamage << endl;
+	}
+
+	for (int i = 0; i < vibor; i++) {
+		cout << players[i].health << endl;
 	}
 
 	return 0;
